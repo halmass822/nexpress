@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import './App.css'
+import HRForm from '../HRForm/HRForm';
 
 function App() {
   const [employeeSearch, setEmployeeSearch] = useState("");
@@ -10,61 +11,67 @@ function App() {
     hireDate: "",
     position: ""
   });
-  const [dialogState, setDialogState] = useState(false);
   const [functionState, setFunctionState] = useState("awaiting request");
-  // const [loading, setLoadingStatus] = useState(false);
-  // const [errorStatus, setErrorStatus] = useState(false);
 
-  // const [name, setName] = useState(""); MOVE TO CREATE EMPLOYEE FORM
-  // const [id, setId] = useState("");
-  // const [hireDate, setHireDate] = useState("");
-  // const [position, setPosition] = useState("");
-
-
-  async function getEmployee(e) {
-    e.preventDefault();
-    setFunctionState("Sending request...");
-    console.log(`GET request to http://localhost:3000/employees/${employeeSearch}`);
-    try {
-      await axios.get(`http://localhost:3000/employees/${employeeSearch}`).then((response) => {
-        if(response){
-          setData(response.data);
-          setFunctionState("Request successful!");
-        } else {
-          setData({name: "", id: "", hireDate: "", position: ""});
-          setFunctionState("Request failed!");
-        }
-      });
-    } catch (error) {
-      setData({name: "", id: "", hireDate: "", position: ""});
+  function handleError(error) {
+    setData({name: "", id: "", hireDate: "", position: ""});
+    if(error.response) {
+      setFunctionState(`Error code ${error.response.status}`);
+    } else {
       console.error(error);
       setFunctionState("Error logged to console");
     }
   }
+
+  async function getEmployee(e) {
+    setFunctionState("Sending request...");
+    setTimeout( async () => {
+        e.preventDefault();
+        console.log(`GET request to http://localhost:3000/employees/${employeeSearch}`);
+        try {
+          await axios.get(`http://localhost:3000/employees/${employeeSearch}`).then((response) => {
+            if(response){
+            setData(response.data);
+            setFunctionState("Request successful!");
+          } else {
+            setData({name: "", id: "", hireDate: "", position: ""});
+            setFunctionState("Request failed!");
+          }
+        });
+      } catch (error) {
+        handleError(error);
+      }
+    }, (Math.ceil(1000 + Math.random() * 500))
+  )}
 
   async function createEmployee(info) {
     setFunctionState("Sending request...");
-    console.log(`PUT request sent to http://localhost:3000/employees/${info.id}\nRequest Data:`);
+    console.log(`POST request sent to http://localhost:3000/employees\nRequest Data:`);
     console.table(info);
-    try {
-      await axios.post(`http://localhost:3000/employees/${info.id}`, info).then(response => {
-        if(response){
-          setData(response.data);
-          setFunctionState("Request successful!");
-        } else {
-          setData({name: "", id: "", hireDate: "", position: ""});
-          setFunctionState("Request failed!");
-        }
-      })
-    } catch (error) {
-      setData({name: "", id: "", hireDate: "", position: ""});
-      console.error(error);
-      setFunctionState("Error logged to console");
+    setTimeout(async () => {
+      try {
+        await axios.post(`http://localhost:3000/employees`, null,
+        {
+          params: info,
+          headers: {'Content-Type': 'application/json'}
+        })
+        .then(response => {
+          if(response){
+            setData(response.data);
+            setFunctionState("New Employee Record Created!");
+          } else {
+            setData({name: "", id: "", hireDate: "", position: ""});
+            setFunctionState("Request failed!");
+          }
+        })
+      } catch (error) {
+        handleError(error);
+      }
+    }, Math.ceil(1000 + Math.random() * 500))
     }
-  }
-
+    
   return (
-    <>
+      <>
       <div className="SearchBar">
         <label>
           <h2>Search:</h2>
@@ -83,6 +90,7 @@ function App() {
           </div> 
         }
       </div>
+      <HRForm createEmployee={createEmployee} />
     </>
   )
 }
