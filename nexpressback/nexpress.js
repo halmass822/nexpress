@@ -41,7 +41,8 @@ app.use((req, res, next) => {
 })
 
 app.get("/employees/:id", (req, res) => {
-    const targetEmployee = employees.find((x) => x.id === req.params.id);
+    const targetEmployee = employees.find((x) => x.id == req.params.id);
+    console.dir(employees)
     if(targetEmployee){
         res.send(targetEmployee);
     } else {
@@ -62,6 +63,26 @@ app.post("/employees", ({query}, res) => {
         res.send(newEmployee);
     } else {
         res.sendStatus(400);
+    }
+});
+
+app.put("/employees/:id", (req, res) => {
+    const targetEmployeeIndex = employees.findIndex(x => x.id == req.params.id);
+    if(targetEmployeeIndex > 0 && req.query.name && req.query.hireDate && req.query.position) {
+        Object.assign(employees[targetEmployeeIndex], req.query);
+        res.send(employees[targetEmployeeIndex]);
+    } else {
+        res.sendStatus(404);
+    }
+});
+
+app.delete("/employees/:id", (req, res) => {
+    const targetEmployeeIndex = employees.findIndex(x => x.id == req.params.id);
+    if(targetEmployeeIndex > 0){
+        employees.splice(targetEmployeeIndex, 1);
+        res.sendStatus(204);
+    } else {
+        res.sendStatus(404);
     }
 })
 
